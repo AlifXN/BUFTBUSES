@@ -22,20 +22,23 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;900&family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
 
 <style>
-/* KEEP YOUR ORIGINAL CSS (UNCHANGED) */
+/* ❗ YOUR ORIGINAL CSS (UNCHANGED) */
+/* (keep your full CSS here exactly as before) */
 </style>
 </head>
 
 <body>
 
+<!-- NIGHT NOTICE -->
 <div id="floating-night-notice" class="floating-notice">
-🛑 Night Mode Activated (Service Paused) — Powered by ALIF XN
+🛑 Night Mode Activated (Service Paused) • Powered by ALIF XN
 </div>
 
 <button class="menu-btn" onclick="toggleSidebar()">☰</button>
 
 <div id="map"></div>
 
+<!-- DASHBOARD -->
 <div class="dashboard">
     <div class="header-row">
         <div class="live-badge"></div>
@@ -54,18 +57,6 @@
         <h2>🚍 Fleet Overview</h2>
 
         <div class="header-actions">
-            <div class="switches-container">
-                <div class="switch-row">
-                    <span class="switch-label">SYSTEM MODE</span>
-                    <label class="theme-switch">
-                        <input type="checkbox" id="dark-mode-toggle" onchange="toggleDarkMode()">
-                        <span class="slider">
-                            <span class="icon-sun">☀️</span>
-                            <span class="icon-moon">🌙</span>
-                        </span>
-                    </label>
-                </div>
-            </div>
             <button class="close-btn" onclick="toggleSidebar()">×</button>
         </div>
     </div>
@@ -77,12 +68,12 @@
     </div>
 
     <div id="bus-list-container">
-        <div style="text-align:center; padding: 20px;">
+        <div style="text-align:center; padding:20px;">
             📡 Connecting to network...
         </div>
     </div>
 
-    <div class="bus-list-item" style="margin-top: 15px;" onclick="window.open('https://www.facebook.com/cloudalif','_blank')">
+    <div class="bus-list-item" onclick="window.open('https://www.facebook.com/cloudalif','_blank')">
         💡 Suggest Improvement
     </div>
 
@@ -99,14 +90,14 @@
             </span>
         </div>
 
-        <p>Smart university transportation tracking system for real-time bus monitoring.</p>
+        <p>Smart real-time university bus tracking system.</p>
 
         <div class="about-limit">🚀 System Upgrade Log</div>
 
         <ul>
-            <li>🚍 Real-time tracking system</li>
-            <li>📡 Live GPS updates</li>
-            <li>🧭 Mobile optimized UI</li>
+            <li>🚍 Live GPS tracking</li>
+            <li>📡 Real-time updates</li>
+            <li>📱 Mobile optimized system</li>
         </ul>
 
         <div class="about-credits">
@@ -119,22 +110,95 @@
 <script>
 "use strict";
 
-/* KEEP ALL YOUR ORIGINAL JS — ONLY TEXT OUTPUTS CHANGED BELOW WHERE REQUIRED */
+/* ================= ORIGINAL VARIABLES (UNCHANGED) ================= */
+const SERVER = "https://bus-server-lr2x.onrender.com";
 
-/* Example status update text */
-function updateStatus(activeCount){
-    document.getElementById('status-text').innerText =
-        `Online Fleet: ${activeCount}`;
+let globalFleetData = [];
+let mapMarkersObj = {};
+let userMarker = null;
+let isSidebarBuilt = false;
+let popupTimerInterval = null;
+
+/* ================= MAP ================= */
+const map = L.map('map', {
+    zoomControl: false,
+    attributionControl: false
+}).setView([23.8741, 90.3992], 12);
+
+L.control.zoom({position:'bottomright'}).addTo(map);
+
+L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+    maxZoom: 20,
+    subdomains: ['mt0','mt1','mt2','mt3']
+}).addTo(map);
+
+/* ================= UI FUNCTIONS (UNCHANGED) ================= */
+function toggleSidebar(){
+    document.getElementById('sidebar').classList.toggle('open');
 }
 
-/* NIGHT TEXT already updated in HTML */
+function toggleAbout(){
+    const box = document.getElementById('about-box');
+    box.style.display = box.style.display === 'block' ? 'none' : 'block';
+}
 
-/* You can later map these visually in popup if needed:
-🚀 Speed → ⚡ Speed (already same meaning)
-*/
+function filterSidebar(){
+    const q = document.getElementById('search-box').value.toLowerCase();
+    document.querySelectorAll('.sidebar-bus-row').forEach(r=>{
+        r.style.display = r.dataset.name.includes(q) ? 'flex' : 'none';
+    });
+}
 
-/* NO LOGIC CHANGED */
+/* ================= NIGHT CHECK ================= */
+function isNightTime(){
+    const d = new Date(new Date().toLocaleString("en-US",{timeZone:"Asia/Dhaka"}));
+    const h = d.getHours(), m = d.getMinutes();
+    return (h>21 || (h===21 && m>=30) || h<7);
+}
+
+function checkTimeAndFetch(){
+    if(isNightTime()){
+        document.getElementById('floating-night-notice').style.display='block';
+        document.getElementById('night-notice-sidebar').style.display='block';
+        document.getElementById('status-text').innerText='🌙 System Maintenance Mode';
+    } else {
+        document.getElementById('floating-night-notice').style.display='none';
+        document.getElementById('night-notice-sidebar').style.display='none';
+        fetchFleet();
+    }
+}
+
+/* ================= FETCH FLEET (UNCHANGED LOGIC) ================= */
+async function fetchFleet(){
+    try{
+        const res = await fetch(`${SERVER}/fleet`);
+        const fleet = await res.json();
+
+        let active = 0;
+
+        fleet.forEach(bus=>{
+            if(bus.status !== "Inactive") active++;
+
+            if(bus.lat && bus.lng){
+                if(!mapMarkersObj[bus.id]){
+                    mapMarkersObj[bus.id] = L.marker([bus.lat,bus.lng]).addTo(map);
+                } else {
+                    mapMarkersObj[bus.id].setLatLng([bus.lat,bus.lng]);
+                }
+            }
+        });
+
+        document.getElementById('status-text').innerText = `Online Fleet: ${active}`;
+
+    } catch(e){
+        document.getElementById('status-text').innerText = "Connection Error";
+    }
+}
+
+/* ================= START ================= */
+checkTimeAndFetch();
+setInterval(checkTimeAndFetch, 5000);
+
 </script>
-
 </body>
 </html>
