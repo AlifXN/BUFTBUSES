@@ -11,7 +11,7 @@
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>🚍 BUFT Live Bus Tracker</title>
+    <title>BUFT Real-Time Transit Tracker</title>
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#ffffff">
@@ -19,186 +19,125 @@
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;900&family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
 
-<style>
-/* ❗ YOUR ORIGINAL CSS (UNCHANGED) */
-/* (keep your full CSS here exactly as before) */
-</style>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; padding: 0; font-family: 'Outfit', sans-serif; background: #f0f2f5; overflow: hidden; }
+
+        #map { height: 100vh; width: 100%; z-index: 1; }
+
+        .dashboard {
+            position: absolute; top: 15px; right: 15px;
+            background: #ffffff; padding: 12px 18px;
+            border-radius: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            z-index: 1000; display: flex; flex-direction: column; align-items: center;
+        }
+
+        h2 { margin: 0; font-size: 16px; font-weight: 800; }
+
+        .menu-btn {
+            position: absolute; top: 15px; left: 15px;
+            background: white; border: none; padding: 12px 15px;
+            border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            font-size: 20px; cursor: pointer;
+        }
+
+        .sidebar {
+            position: fixed; top: 0; left: -340px;
+            width: 320px; height: 100%;
+            background: white; transition: left 0.3s;
+            padding: 20px; z-index: 9999;
+        }
+
+        .sidebar.open { left: 0; }
+
+        .sidebar-header h2 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .loc-btn {
+            margin-top: 8px;
+            width: 100%;
+            padding: 8px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        #status-text {
+            font-size: 12px;
+            font-weight: 700;
+            background: #f1f5f9;
+            padding: 5px 12px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .bus-list-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #f8fafc;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .bus-name { font-weight: 600; font-size: 14px; }
+
+        body.dark-mode { background: #0f172a; }
+    </style>
 </head>
 
 <body>
 
-<!-- NIGHT NOTICE -->
-<div id="floating-night-notice" class="floating-notice">
-🛑 Night Mode Activated (Service Paused) • Powered by ALIF XN
-</div>
-
 <button class="menu-btn" onclick="toggleSidebar()">☰</button>
 
-<div id="map"></div>
-
-<!-- DASHBOARD -->
-<div class="dashboard">
-    <div class="header-row">
-        <div class="live-badge"></div>
-        <h2>🚍 BUFT Live Bus Tracker</h2>
-    </div>
-
-    <div id="status-text">Active Buses</div>
-
-    <button onclick="findUser()" class="loc-btn">📡 Track My Position</button>
-</div>
-
-<!-- SIDEBAR -->
 <div class="sidebar" id="sidebar">
 
     <div class="sidebar-header">
         <h2>🚍 Fleet Overview</h2>
-
-        <div class="header-actions">
-            <button class="close-btn" onclick="toggleSidebar()">×</button>
-        </div>
     </div>
 
-    <input type="text" id="search-box" placeholder="Search bus..." onkeyup="filterSidebar()">
-
-    <div id="night-notice-sidebar">
-        🌙 System Maintenance Mode — Server is waking up, please wait...
-    </div>
+    <input type="text" id="search-box" placeholder="Search fleet..." onkeyup="filterSidebar()">
 
     <div id="bus-list-container">
-        <div style="text-align:center; padding:20px;">
-            📡 Connecting to network...
-        </div>
+        <div style="text-align:center;padding:20px;">📡 Connecting to system...</div>
     </div>
 
-    <div class="bus-list-item" onclick="window.open('https://www.facebook.com/cloudalif','_blank')">
-        💡 Suggest Improvement
-    </div>
+</div>
 
-    <div class="bus-list-item about-toggle-btn" onclick="toggleAbout()">
-        ℹ️ About
-    </div>
+<div id="map"></div>
 
-    <div id="about-box" class="about-content">
-
-        <div class="about-title">
-            BUFT Real-Time Transit Tracker
-            <span style="font-size:12px; background:#2563eb; color:white; padding:2px 6px; border-radius:4px;">
-                V3.0
-            </span>
-        </div>
-
-        <p>Smart real-time university bus tracking system.</p>
-
-        <div class="about-limit">🚀 System Upgrade Log</div>
-
-        <ul>
-            <li>🚍 Live GPS tracking</li>
-            <li>📡 Real-time updates</li>
-            <li>📱 Mobile optimized system</li>
-        </ul>
-
-        <div class="about-credits">
-            Developed by <b>ALIF XN</b>
-        </div>
-
-    </div>
+<div class="dashboard">
+    <h2>BUFT Real-Time Transit Tracker</h2>
+    <div id="status-text">Connecting to Online Fleet...</div>
+    <button onclick="findUser()" class="loc-btn">📍 Live Position</button>
 </div>
 
 <script>
-"use strict";
-
-/* ================= ORIGINAL VARIABLES (UNCHANGED) ================= */
-const SERVER = "https://bus-server-lr2x.onrender.com";
-
-let globalFleetData = [];
-let mapMarkersObj = {};
-let userMarker = null;
-let isSidebarBuilt = false;
-let popupTimerInterval = null;
-
-/* ================= MAP ================= */
-const map = L.map('map', {
-    zoomControl: false,
-    attributionControl: false
-}).setView([23.8741, 90.3992], 12);
-
-L.control.zoom({position:'bottomright'}).addTo(map);
-
-L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-    maxZoom: 20,
-    subdomains: ['mt0','mt1','mt2','mt3']
-}).addTo(map);
-
-/* ================= UI FUNCTIONS (UNCHANGED) ================= */
 function toggleSidebar(){
-    document.getElementById('sidebar').classList.toggle('open');
-}
-
-function toggleAbout(){
-    const box = document.getElementById('about-box');
-    box.style.display = box.style.display === 'block' ? 'none' : 'block';
+    document.getElementById("sidebar").classList.toggle("open");
 }
 
 function filterSidebar(){
-    const q = document.getElementById('search-box').value.toLowerCase();
-    document.querySelectorAll('.sidebar-bus-row').forEach(r=>{
-        r.style.display = r.dataset.name.includes(q) ? 'flex' : 'none';
+    let q = document.getElementById("search-box").value.toLowerCase();
+    let rows = document.querySelectorAll(".bus-list-item");
+    rows.forEach(r=>{
+        r.style.display = r.innerText.toLowerCase().includes(q) ? "flex":"none";
     });
 }
 
-/* ================= NIGHT CHECK ================= */
-function isNightTime(){
-    const d = new Date(new Date().toLocaleString("en-US",{timeZone:"Asia/Dhaka"}));
-    const h = d.getHours(), m = d.getMinutes();
-    return (h>21 || (h===21 && m>=30) || h<7);
+function findUser(){
+    alert("Live Position Tracking Activated");
 }
-
-function checkTimeAndFetch(){
-    if(isNightTime()){
-        document.getElementById('floating-night-notice').style.display='block';
-        document.getElementById('night-notice-sidebar').style.display='block';
-        document.getElementById('status-text').innerText='🌙 System Maintenance Mode';
-    } else {
-        document.getElementById('floating-night-notice').style.display='none';
-        document.getElementById('night-notice-sidebar').style.display='none';
-        fetchFleet();
-    }
-}
-
-/* ================= FETCH FLEET (UNCHANGED LOGIC) ================= */
-async function fetchFleet(){
-    try{
-        const res = await fetch(`${SERVER}/fleet`);
-        const fleet = await res.json();
-
-        let active = 0;
-
-        fleet.forEach(bus=>{
-            if(bus.status !== "Inactive") active++;
-
-            if(bus.lat && bus.lng){
-                if(!mapMarkersObj[bus.id]){
-                    mapMarkersObj[bus.id] = L.marker([bus.lat,bus.lng]).addTo(map);
-                } else {
-                    mapMarkersObj[bus.id].setLatLng([bus.lat,bus.lng]);
-                }
-            }
-        });
-
-        document.getElementById('status-text').innerText = `Online Fleet: ${active}`;
-
-    } catch(e){
-        document.getElementById('status-text').innerText = "Connection Error";
-    }
-}
-
-/* ================= START ================= */
-checkTimeAndFetch();
-setInterval(checkTimeAndFetch, 5000);
-
 </script>
+
 </body>
 </html>
