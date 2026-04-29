@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bus Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #0f172a;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+        }
+
+        input {
+            padding: 10px;
+            width: 80%;
+            max-width: 400px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border: none;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+        }
+
+        button {
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            background: #2563eb;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .top-btn {
+            margin: 10px;
+            padding: 12px 20px;
+            background: #16a34a;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>🚌 Bus Tracker</h1>
+
+<input type="text" id="search" placeholder="Search Bus..." onkeyup="filterBus()">
+
+<br>
+
+<button class="top-btn" onclick="openAll()">🚀 Open All</button>
+
+<p>Auto refresh every 30 seconds</p>
+
+<div class="grid" id="busContainer"></div>
+
+<script>
+
+const buses = [
+{ name: "Bus 356302", link: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzAyJkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
+{ name: "Bus 356300", link: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzAwJkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
+{ name: "Bus 356309", link: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzA5JkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
+{ name: "School Bus 356329", link: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzI5JlNjaG9vbEJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
+{ name: "Bus 356330", link: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzMwJkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
+{ name: "School Bus 356331", link: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzMxJlNjaG9vbEJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
+{ name: "School Bus 356332", link: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzMyJlNjaG9vbEJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
+{ name: "School Bus 356308", link: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzA4JlNjaG9vbEJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
+{ name: "Bus 356327", link: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzI3JkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
+{ name: "Bus 356297", link: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2Mjk3JkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
+{ name: "Bus 356316", link: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzE2JkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
+{ name: "Bus 356319", link: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzE5JkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
+{ name: "Bus 356323", link: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzIzJkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
+{ name: "Bus 356322", link: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzIyJkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
+{ name: "Bus 356313", link: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzEzJkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
+{ name: "Bus 356314", link: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzE0JkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
+{ name: "Bus 356320", link: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzIwJkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
+{ name: "Bus 356307", link: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzA3JkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
+{ name: "Bus 356311", link: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzExJkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
+{ name: "Bus 356328", link: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzI4JkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
+{ name: "Bus 356317", link: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzE3JkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
+{ name: "Bus 356312", link: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzEyJkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
+{ name: "Bus 356305", link: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzA1JkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
+{ name: "School Bus 356310", link: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzEwJlNjaG9vbEJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
+{ name: "Bus 356318", link: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzE4JkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
+{ name: "Bus 356315", link: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzE1JkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" }
+];
+
+const container = document.getElementById("busContainer");
+
+function loadBuses() {
+    container.innerHTML = "";
+    buses.forEach(bus => {
+        const btn = document.createElement("button");
+        btn.innerText = bus.name;
+        btn.onclick = () => window.open(bus.link, "_blank");
+        container.appendChild(btn);
+    });
+}
+
+function filterBus() {
+    const search = document.getElementById("search").value.toLowerCase();
+    container.innerHTML = "";
+    buses
+        .filter(bus => bus.name.toLowerCase().includes(search))
+        .forEach(bus => {
+            const btn = document.createElement("button");
+            btn.innerText = bus.name;
+            btn.onclick = () => window.open(bus.link, "_blank");
+            container.appendChild(btn);
+        });
+}
+
+function openAll() {
+    buses.forEach(bus => window.open(bus.link, "_blank"));
+}
+
+// Auto refresh every 30 sec
+setInterval(() => {
+    location.reload();
+}, 30000);
+
+loadBuses();
+
+</script>
+
+</body>
+</html>
