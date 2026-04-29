@@ -1,134 +1,147 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Bus Live Dashboard</title>
+    <title>Transport Control Panel</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <style>
         body {
-            font-family: Arial;
-            background: #0f172a;
-            color: white;
             margin: 0;
-            padding: 15px;
+            font-family: Arial;
+            background: #0b1220;
+            color: white;
+        }
+
+        header {
+            padding: 20px;
+            text-align: center;
+            background: #111827;
         }
 
         h1 {
-            text-align: center;
-            margin-bottom: 10px;
+            margin: 0;
+            font-size: 22px;
         }
 
-        .top-bar {
+        .container {
+            padding: 20px;
             text-align: center;
-            margin-bottom: 15px;
         }
 
         input {
-            padding: 10px;
             width: 90%;
             max-width: 400px;
-            border-radius: 8px;
+            padding: 12px;
+            border-radius: 10px;
             border: none;
+            margin-bottom: 15px;
+        }
+
+        .buttons {
+            margin: 10px;
+        }
+
+        button {
+            padding: 12px 18px;
+            margin: 5px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .open-all {
+            background: #22c55e;
+        }
+
+        .reset {
+            background: #3b82f6;
         }
 
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 10px;
+            margin-top: 20px;
         }
 
-        button {
-            padding: 12px;
-            border: none;
-            border-radius: 10px;
-            background: #2563eb;
+        .bus-btn {
+            background: #1f2937;
             color: white;
-            cursor: pointer;
-            font-size: 14px;
+            border: 1px solid #374151;
         }
 
-        button:hover {
-            background: #1d4ed8;
-        }
-
-        .controls {
-            text-align: center;
-            margin: 10px;
-        }
-
-        .controls button {
-            background: #16a34a;
-            margin: 5px;
+        .bus-btn:hover {
+            background: #374151;
         }
     </style>
 </head>
 
 <body>
 
-<h1>🚌 Bus Live Dashboard</h1>
+<header>
+    <h1>🚌 Transport Control Panel</h1>
+    <p>Live Bus Access Dashboard</p>
+</header>
 
-<div class="top-bar">
-    <input type="text" id="search" placeholder="Search bus..." onkeyup="filterBuses()">
+<div class="container">
+
+    <input type="text" id="search" placeholder="Search bus number..." onkeyup="filterBuses()">
+
+    <div class="buttons">
+        <button class="open-all" onclick="openAll()">🚀 Open All Buses</button>
+        <button class="reset" onclick="loadBuses()">🔄 Reset</button>
+    </div>
+
+    <div class="grid" id="busContainer"></div>
+
 </div>
-
-<div class="controls">
-    <button onclick="openAll()">🚀 Open All</button>
-    <button onclick="loadBuses()">🔄 Reset</button>
-</div>
-
-<div class="grid" id="busContainer"></div>
 
 <script>
 
 const buses = [
-{ name: "Bus 356302", url: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzAyJkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
-{ name: "Bus 356300", url: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzAwJkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
-{ name: "Bus 356309", url: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzA5JkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
-{ name: "Bus 356329", url: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzI5JlNjaG9vbEJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
-{ name: "Bus 356330", url: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzMwJkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
-{ name: "Bus 356331", url: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzMxJlNjaG9vbEJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
-{ name: "Bus 356332", url: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzMyJlNjaG9vbEJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
-{ name: "Bus 356308", url: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzA4JlNjaG9vbEJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
-{ name: "Bus 356327", url: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzI3JkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
-{ name: "Bus 356297", url: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2Mjk3JkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
-{ name: "Bus 356316", url: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzE2JkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
-{ name: "Bus 356319", url: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzE5JkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
-{ name: "Bus 356323", url: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzIzJkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
-{ name: "Bus 356322", url: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzIyJkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
-{ name: "Bus 356313", url: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzEzJkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
-{ name: "Bus 356314", url: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzE0JkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
-{ name: "Bus 356320", url: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzIwJkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
-{ name: "Bus 356307", url: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzA3JkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
-{ name: "Bus 356311", url: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzExJkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
-{ name: "Bus 356328", url: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzI4JkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
-{ name: "Bus 356317", url: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzE3JkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
-{ name: "Bus 356312", url: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzEyJkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
-{ name: "Bus 356305", url: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzA1JkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
-{ name: "Bus 356310", url: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzEwJlNjaG9vbEJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
-{ name: "Bus 356318", url: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzE4JkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" },
-{ name: "Bus 356315", url: "https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzE1JkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl" }
+"Bus 356302|https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzAyJkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl",
+"Bus 356300|https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzAwJkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl",
+"Bus 356309|https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzA5JkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl",
+"Bus 356329|https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzI5JlNjaG9vbEJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl",
+"Bus 356330|https://app.bongoiot.com/jsp/quickview.jsp?param=MzU2MzMwJkJ1cyZFTiZzZXJ2ZXJQdXNoRmxhZz10cnVl"
 ];
 
 const container = document.getElementById("busContainer");
 
 function loadBuses(list = buses) {
     container.innerHTML = "";
-    list.forEach(bus => {
+
+    list.forEach(item => {
+        const [name, link] = item.split("|");
+
         const btn = document.createElement("button");
-        btn.innerText = bus.name;
-        btn.onclick = () => window.open(bus.url, "_blank");
+        btn.className = "bus-btn";
+        btn.innerText = name;
+
+        btn.onclick = () => {
+            window.open(link, "_blank");
+        };
+
         container.appendChild(btn);
     });
 }
 
 function filterBuses() {
-    const value = document.getElementById("search").value.toLowerCase();
-    const filtered = buses.filter(b => b.name.toLowerCase().includes(value));
+    const val = document.getElementById("search").value.toLowerCase();
+
+    const filtered = buses.filter(b =>
+        b.toLowerCase().includes(val)
+    );
+
     loadBuses(filtered);
 }
 
 function openAll() {
-    buses.forEach(bus => window.open(bus.url, "_blank"));
+    buses.forEach(item => {
+        const link = item.split("|")[1];
+        window.open(link, "_blank");
+    });
 }
 
 loadBuses();
