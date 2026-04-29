@@ -1,99 +1,213 @@
-<script>
-// 1. Initialize the Map
-// Coordinates set to center around the campus area
-const map = L.map('map', { zoomControl: false }).setView([23.8864, 90.3936], 14);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R1EWC93EWM"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-R1EWC93EWM');
+    </script>
 
-// 2. Add Map Tiles (Using OpenStreetMap - completely free and doesn't require API keys)
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BUFT Real-Time Transit Tracker | ALIF XN</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-blue: #2563eb;
+            --surface-white: rgba(255, 255, 255, 0.9);
+            --text-main: #0f172a;
+            --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        * { box-sizing: border-box; }
+        body { margin: 0; padding: 0; font-family: 'Outfit', sans-serif; background: #f0f2f5; overflow: hidden; }
+
+        /* Map Container - Essential to have height */
+        #map { height: 100vh; width: 100%; z-index: 1; background: #cbd5e1; }
+
+        /* UI Shell: Dashboard */
+        .dashboard {
+            position: absolute; top: 20px; right: 20px;
+            background: var(--surface-white); backdrop-filter: blur(12px);
+            padding: 16px 20px; border-radius: 20px;
+            box-shadow: var(--shadow-soft); z-index: 1000;
+            display: flex; flex-direction: column; align-items: center; width: 280px;
+        }
+
+        .dashboard h2 { margin: 0 0 8px 0; font-size: 16px; font-weight: 800; text-align: center; }
+
+        .status-badge {
+            font-size: 12px; font-weight: 700; background: #e2e8f0;
+            padding: 6px 14px; border-radius: 20px; margin-bottom: 12px;
+            display: flex; align-items: center; gap: 6px;
+        }
+
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .active .status-dot { background-color: #22c55e; box-shadow: 0 0 8px #22c55e; }
+        .maintenance .status-dot { background-color: #ef4444; }
+
+        .loc-btn {
+            width: 100%; padding: 12px; background: var(--primary-blue);
+            color: white; border: none; border-radius: 12px;
+            font-weight: 700; cursor: pointer; transition: 0.2s;
+        }
+
+        /* Sidebar Design */
+        .menu-btn {
+            position: absolute; top: 20px; left: 20px;
+            background: var(--surface-white); border: none; padding: 12px 16px;
+            border-radius: 16px; box-shadow: var(--shadow-soft);
+            font-size: 20px; cursor: pointer; z-index: 1000;
+        }
+
+        .sidebar {
+            position: fixed; top: 0; left: -350px;
+            width: 340px; height: 100%; background: white;
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 24px; z-index: 9999; display: flex; flex-direction: column;
+        }
+
+        .sidebar.open { left: 0; }
+
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        
+        .search-input {
+            width: 100%; padding: 12px; background: #f8fafc;
+            border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 20px;
+        }
+
+        #bus-list-container { flex-grow: 1; overflow-y: auto; }
+
+        .bus-list-item {
+            padding: 14px; margin-bottom: 10px; background: #f8fafc;
+            border-radius: 12px; cursor: pointer; display: flex;
+            justify-content: space-between; border: 1px solid #f1f5f9;
+        }
+
+        .sidebar-footer { margin-top: auto; padding-top: 20px; text-align: center; border-top: 1px solid #e2e8f0; }
+        .brand-text { font-size: 12px; color: #64748b; }
+        .brand-text span { font-weight: 900; color: #0f172a; }
+
+        /* Mobile specific adjustments */
+        @media (max-width: 600px) {
+            .dashboard { right: 10px; left: 10px; width: auto; top: auto; bottom: 20px; }
+            .menu-btn { top: 15px; left: 15px; }
+        }
+    </style>
+</head>
+
+<body>
+
+<button class="menu-btn" onclick="toggleSidebar()">☰</button>
+
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <h2 style="margin:0">🚍 Fleet Overview</h2>
+        <button onclick="toggleSidebar()" style="background:none; border:none; font-size:24px; cursor:pointer">×</button>
+    </div>
+
+    <input type="text" id="search-box" class="search-input" placeholder="Search fleet..." onkeyup="filterSidebar()">
+
+    <div id="bus-list-container">
+        <div style="text-align:center; padding:20px; color:#64748b">Initializing system...</div>
+    </div>
+
+    <div class="sidebar-footer">
+        <div class="brand-text">Engineered by <span>ALIF XN</span></div>
+    </div>
+</div>
+
+<div id="map"></div>
+
+<div class="dashboard">
+    <h2>BUFT Real-Time Transit Tracker</h2>
+    <div id="status-text" class="status-badge maintenance">
+        <span class="status-dot"></span> Connecting...
+    </div>
+    <button onclick="findUser()" class="loc-btn">📍 Live Position</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+
+<script>
+// 1. Initialize Map
+const map = L.map('map', { zoomControl: false }).setView([23.8864, 90.3936], 15);
+
+// 2. Load Tiles (OpenStreetMap)
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '© OpenStreetMap contributors | ALIF XN'
+    attribution: '© ALIF XN'
 }).addTo(map);
 
-// Move zoom controls to the bottom right so they don't block the UI
-L.control.zoom({ position: 'bottomright' }).addTo(map);
-
-// 3. Mock Fleet Data (Simulating a live backend connection)
-const fleetData = [
-    { id: 1, name: "Route 1 - Express", status: "En Route", lat: 23.8864, lng: 90.3936 },
-    { id: 2, name: "Route 2 - Local", status: "Boarding", lat: 23.8800, lng: 90.3950 },
-    { id: 3, name: "Route 3 - Shuttle", status: "Delayed", lat: 23.8900, lng: 90.3900 }
+// 3. Mock Data for BUFT Buses
+const fleet = [
+    { id: 1, name: "BUFT Route 1 (Ashulia)", status: "En Route", lat: 23.8864, lng: 90.3936 },
+    { id: 2, name: "BUFT Route 2 (Uttara)", status: "Boarding", lat: 23.8759, lng: 90.3795 },
+    { id: 3, name: "BUFT Route 3 (Mirpur)", status: "Delayed", lat: 23.8041, lng: 90.3673 }
 ];
 
-// 4. Render Data to Map and Sidebar
-function loadFleetData() {
+// 4. Render Fleet
+function initFleet() {
     const container = document.getElementById('bus-list-container');
-    container.innerHTML = ''; // Clears the "Connecting..." message
+    container.innerHTML = '';
 
-    fleetData.forEach(bus => {
-        // Set dynamic colors based on status
-        let statusColor = '#eab308'; // Yellow default
-        if (bus.status === 'En Route') statusColor = '#22c55e'; // Green
-        if (bus.status === 'Delayed') statusColor = '#ef4444'; // Red
+    fleet.forEach(bus => {
+        // Map Marker
+        const marker = L.marker([bus.lat, bus.lng]).addTo(map);
+        marker.bindPopup(`<b>${bus.name}</b><br>Status: ${bus.status}`);
 
-        // Build Sidebar Item
-        const busHTML = `
-            <div class="bus-list-item" onclick="focusBus(${bus.lat}, ${bus.lng})">
-                <span class="bus-name">${bus.name}</span>
-                <span style="font-size: 12px; color: ${statusColor}; font-weight: bold;">${bus.status}</span>
-            </div>
+        // Sidebar Item
+        const item = document.createElement('div');
+        item.className = 'bus-list-item';
+        item.onclick = () => {
+            map.flyTo([bus.lat, bus.lng], 16);
+            if(window.innerWidth < 600) toggleSidebar();
+        };
+        
+        let color = bus.status === "En Route" ? "#22c55e" : (bus.status === "Delayed" ? "#ef4444" : "#eab308");
+        
+        item.innerHTML = `
+            <span style="font-weight:700">${bus.name}</span>
+            <span style="font-size:12px; color:${color}; font-weight:bold">${bus.status}</span>
         `;
-        container.innerHTML += busHTML;
-
-        // Add Marker to Map
-        L.marker([bus.lat, bus.lng]).addTo(map)
-            .bindPopup(`<b>${bus.name}</b><br>Status: ${bus.status}`);
+        container.appendChild(item);
     });
 
-    // Update the Dashboard Status Badge
-    const statusBadge = document.getElementById('status-text');
-    statusBadge.className = 'status-badge active';
-    statusBadge.innerHTML = '<span class="status-dot"></span> System Online';
+    // Update Dashboard UI
+    const statusBox = document.getElementById('status-text');
+    statusBox.className = 'status-badge active';
+    statusBox.innerHTML = '<span class="status-dot"></span> Monitoring Active Fleet';
 }
 
-// Simulate network loading time (1.5 seconds) then load the mock data
-setTimeout(loadFleetData, 1500);
-
-// --- UI Functions ---
-
-function toggleSidebar(){
+// 5. Functions
+function toggleSidebar() {
     document.getElementById("sidebar").classList.toggle("open");
 }
 
-function filterSidebar(){
+function filterSidebar() {
     let q = document.getElementById("search-box").value.toLowerCase();
-    let rows = document.querySelectorAll(".bus-list-item");
-    rows.forEach(r => {
-        let text = r.querySelector('.bus-name').innerText.toLowerCase();
-        r.style.display = text.includes(q) ? "flex" : "none";
+    let items = document.querySelectorAll(".bus-list-item");
+    items.forEach(i => {
+        i.style.display = i.innerText.toLowerCase().includes(q) ? "flex" : "none";
     });
 }
 
-// Click a bus in the sidebar to fly to it on the map
-function focusBus(lat, lng) {
-    map.flyTo([lat, lng], 16, { duration: 1.5 });
-    // Auto-close sidebar on mobile after clicking
-    if(window.innerWidth < 768) toggleSidebar(); 
-}
-
-// Live GPS Tracking
-function findUser(){
-    const locBtn = document.querySelector('.loc-btn');
-    locBtn.innerHTML = "Fetching GPS...";
-    
-    // Request device location
+function findUser() {
     map.locate({setView: true, maxZoom: 16});
-    
-    // If successful
-    map.on('locationfound', function(e) {
-        L.marker(e.latlng).addTo(map).bindPopup("Your Live Position").openPopup();
-        locBtn.innerHTML = "📍 Location Found";
-        setTimeout(() => locBtn.innerHTML = "📍 Live Position", 3000); // Reset text
-    });
-    
-    // If user denies permission or it fails
-    map.on('locationerror', function(e) {
-        alert("Could not access location. Please check your browser's GPS permissions.");
-        locBtn.innerHTML = "📍 Live Position";
-    });
 }
+
+map.on('locationfound', (e) => {
+    L.circle(e.latlng, e.accuracy).addTo(map);
+    L.marker(e.latlng).addTo(map).bindPopup("You are here").openPopup();
+});
+
+// Run
+setTimeout(initFleet, 1000);
 </script>
+
+</body>
+</html>
