@@ -11,7 +11,7 @@
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BUFT Bus Tracker V3.0</title>
+    <title>BUFT Bus Tracker </title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#ffffff">
@@ -188,12 +188,12 @@
     </style>
 </head>
 <body>
-    <div id="floating-night-notice" class="floating-notice">🌙 Service Paused (Night) - Resumes 7:00 AM Morning</div>
+    <div id="floating-night-notice" class="floating-notice"> Under Maintenance , সকাল ৭ঃ০০ টা থেকে শুরু হবে </div>
     <button class="menu-btn" onclick="toggleSidebar()">☰</button>
 
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <h2>🚍 Bus List</h2>
+            <h2>🚍 Buses</h2>
             <div class="header-actions">
                 <div class="switches-container">
                     <div class="switch-row">
@@ -243,7 +243,7 @@
             <div id="whats-new-content">
                 <ul class="new-feature-list">
                     <li><b>Crowdsourced Capacity:</b> Real-time "Mostly Full" and "Full" passenger reports to help you plan your ride.</li>
-                    <li><b>Live Compass:</b> "Locate Me" features a rotating blue beam showing your exact direction.</li>
+                    <li><b>Live Compass:</b> "Where I'm" features a rotating blue beam showing your exact direction.</li>
                     <li><b>Embedded Labels:</b> Bus numbers sit perfectly centered on map icons for instant reading.</li>
                     <li><b>True Dark Mode:</b> A sleek menu switch automatically darkens the app and map tiles.</li>
                     <li><b>Sidebar Search:</b> Instantly find specific buses or routes without scrolling.</li>
@@ -252,7 +252,7 @@
                 </ul>
             </div>
 
-            <div class="about-credits">Developed By: <a href="https://www.facebook.com/NabilShazzad" target="_blank" style="color: #2563eb; text-decoration: none;"><b>Shazzad Hossain Nabil (TE_221)</b></a> <br>Assisted by: <b>Google Gemini AI</b>
+            <div class="about-credits">Developed By: <a href="https://www.facebook.com/cloudalif" target="_blank" style="color: #2563eb; text-decoration: none;"><b>Jannatul Nayeem Alif (AMT_232)</b></a> <br>Assisted by: <b>Google Gemini AI</b>
                 <div style="margin-top: 10px;">
                     <img src="https://hits.sh/naabilll.github.io/buft-bus-tracker.svg?label=Total%20Visitors&extraCount=14000&color=2563eb&labelColor=0f172a" alt="Total Visitors">
                 </div>
@@ -262,7 +262,7 @@
 
     <div id="error-popup" class="error-popup-overlay">
         <div class="error-popup-box">
-            <div class="error-popup-title">অনুগ্রহ করে ১ মিনিট অপেক্ষা করুন।</div>
+            <div class="error-popup-title">Wait</div>
             
             <div class="bus-loader-container">
                 <div id="moving-bus-wrapper" class="moving-bus-wrapper">
@@ -276,8 +276,7 @@
             <div id="bengali-timer" class="countdown-circle">৫০</div>
             
             <div class="error-popup-text">
-                ফ্রি সার্ভার ব্যবহারের কারণে ১৫ মিনিট কেউ সাইটে না থাকলে এটি সাময়িকভাবে বন্ধ (Sleep Mode) হয়ে যায়। তাই নতুন করে ওয়েবসাইট ওপেন করলে প্রথমবার লোড হতে প্রায় ১ মিনিট সময় লাগতে পারে। একবার লোড হয়ে গেলে আর কোনো সমস্যা হবে না।
-            </div>
+               (Sleep Mode)   </div>
             
             <div class="error-popup-close" onclick="closeErrorPopup()">Dismiss</div>
         </div>
@@ -285,9 +284,9 @@
 
     <div id="map"></div>
     <div class="dashboard">
-        <div class="header-row"><div class="live-badge"></div><h2>BUFT Shuttle Live</h2></div>
-        <div id="status-text">Connecting...</div>
-        <button onclick="findUser()" class="loc-btn"><span>📍</span> Locate Me</button>
+        <div class="header-row"><div class="live-badge"></div><h2>BUFT BUSES LIVE LOCATION</h2></div>
+        document.getElementById('status-text').innerText = "System initializing....";
+        <button onclick="findUser()" class="loc-btn"><span>📍</span> Live Position</button>
     </div>
 
     <script>
@@ -403,7 +402,7 @@
             if (!navigator.geolocation) { alert("GPS is required to verify you are on the bus."); return; }
             
             const originalText = btnElement.innerText;
-            btnElement.innerText = "📍 Verifying GPS...";
+            btnElement.innerText = "📍 WAIT, Verifying GPS...";
             btnElement.style.opacity = "0.7";
             btnElement.disabled = true;
 
