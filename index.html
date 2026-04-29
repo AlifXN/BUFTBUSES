@@ -8,206 +8,192 @@
       gtag('js', new Date());
       gtag('config', 'G-R1EWC93EWM');
     </script>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BUFT Real-Time Transit Tracker | ALIF XN</title>
-
+    <title>ALIF Bus Tracker V3.0</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="apple-touch-icon" href="logo.png">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;900&family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
 
     <style>
+        /* --- BRANDING THEME COLORS --- */
         :root {
-            --primary-blue: #2563eb;
-            --surface-white: rgba(255, 255, 255, 0.9);
-            --text-main: #0f172a;
-            --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --primary: #6366f1; /* Electric Indigo */
+            --primary-hover: #4f46e5;
+            --accent: #ef4444;
+            --bg-light: #f8fafc;
+            --dark-bg: #0f172a;
+            --dark-surface: #1e293b;
         }
 
         * { box-sizing: border-box; }
-        body { margin: 0; padding: 0; font-family: 'Outfit', sans-serif; background: #f0f2f5; overflow: hidden; }
+        body { margin: 0; padding: 0; font-family: 'Outfit', sans-serif; background: #f0f2f5; overflow: hidden; transition: background 0.3s; }
+        #map { height: 100vh; width: 100%; z-index: 1; }
 
-        /* Map Container - Essential to have height */
-        #map { height: 100vh; width: 100%; z-index: 1; background: #cbd5e1; }
-
-        /* UI Shell: Dashboard */
         .dashboard {
-            position: absolute; top: 20px; right: 20px;
-            background: var(--surface-white); backdrop-filter: blur(12px);
-            padding: 16px 20px; border-radius: 20px;
-            box-shadow: var(--shadow-soft); z-index: 1000;
-            display: flex; flex-direction: column; align-items: center; width: 280px;
+            position: absolute; top: 15px; right: 15px;
+            background: #ffffff; padding: 12px 18px;
+            border-radius: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            z-index: 1000; display: flex; flex-direction: column; align-items: center;
+            transition: background 0.3s, color 0.3s;
         }
-
-        .dashboard h2 { margin: 0 0 8px 0; font-size: 16px; font-weight: 800; text-align: center; }
-
-        .status-badge {
-            font-size: 12px; font-weight: 700; background: #e2e8f0;
-            padding: 6px 14px; border-radius: 20px; margin-bottom: 12px;
-            display: flex; align-items: center; gap: 6px;
-        }
-
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-        .active .status-dot { background-color: #22c55e; box-shadow: 0 0 8px #22c55e; }
-        .maintenance .status-dot { background-color: #ef4444; }
-
-        .loc-btn {
-            width: 100%; padding: 12px; background: var(--primary-blue);
-            color: white; border: none; border-radius: 12px;
-            font-weight: 700; cursor: pointer; transition: 0.2s;
-        }
-
-        /* Sidebar Design */
-        .menu-btn {
-            position: absolute; top: 20px; left: 20px;
-            background: var(--surface-white); border: none; padding: 12px 16px;
-            border-radius: 16px; box-shadow: var(--shadow-soft);
-            font-size: 20px; cursor: pointer; z-index: 1000;
-        }
-
-        .sidebar {
-            position: fixed; top: 0; left: -350px;
-            width: 340px; height: 100%; background: white;
-            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            padding: 24px; z-index: 9999; display: flex; flex-direction: column;
-        }
-
-        .sidebar.open { left: 0; }
-
-        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .header-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .live-badge { width: 10px; height: 10px; background: var(--accent); border-radius: 50%; animation: pulse-red 2s infinite; }
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
         
-        .search-input {
-            width: 100%; padding: 12px; background: #f8fafc;
-            border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 20px;
-        }
+        h2 { margin: 0; color: #0f172a; font-size: 16px; font-weight: 800; transition: color 0.3s; }
+        #status-text { font-size: 12px; font-weight: 700; background: #f1f5f9; padding: 5px 12px; border-radius: 12px; transition: background 0.3s, color 0.3s; white-space: nowrap; text-align: center; }
+        
+        .loc-btn { margin-top: 8px; width: 100%; padding: 8px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: background 0.3s; }
+        .loc-btn:hover { background: var(--primary-hover); }
 
-        #bus-list-container { flex-grow: 1; overflow-y: auto; }
+        .menu-btn { position: absolute; top: 15px; left: 15px; background: white; border: none; padding: 12px 15px; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.15); font-size: 20px; cursor: pointer; z-index: 1001; transition: background 0.3s, color 0.3s; }
 
-        .bus-list-item {
-            padding: 14px; margin-bottom: 10px; background: #f8fafc;
-            border-radius: 12px; cursor: pointer; display: flex;
-            justify-content: space-between; border: 1px solid #f1f5f9;
-        }
+        /* SIDEBAR */
+        .sidebar { position: fixed; top: 0; left: -340px; width: 320px; height: 100%; background: white; z-index: 9999; transition: left 0.3s ease, background 0.3s; box-shadow: 5px 0 25px rgba(0,0,0,0.1); padding: 20px; overflow-y: auto; }
+        .sidebar.open { left: 0; }
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
+        
+        /* THEME SLIDER */
+        .switches-container { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+        .switch-label { font-size: 10px; font-weight: 900; letter-spacing: 0.5px; color: #64748b; }
+        .theme-switch { position: relative; display: inline-block; width: 46px; height: 24px; }
+        .theme-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .4s; border-radius: 30px; display: flex; align-items: center; justify-content: space-between; padding: 0 5px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; z-index: 2; }
+        #dark-mode-toggle:checked + .slider { background-color: var(--primary); }
+        #dark-mode-toggle:checked + .slider:before { transform: translateX(22px); }
 
-        .sidebar-footer { margin-top: auto; padding-top: 20px; text-align: center; border-top: 1px solid #e2e8f0; }
-        .brand-text { font-size: 12px; color: #64748b; }
-        .brand-text span { font-weight: 900; color: #0f172a; }
+        /* BUS LIST */
+        .bus-list-item { padding: 12px; margin-bottom: 8px; background: var(--bg-light); border-radius: 10px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: space-between; border: 1px solid transparent; }
+        .bus-list-item:hover { border-color: var(--primary); background: #eef2ff; }
+        .bus-name { font-weight: 600; color: #334155; font-size: 14px; }
 
-        /* Mobile specific adjustments */
-        @media (max-width: 600px) {
-            .dashboard { right: 10px; left: 10px; width: auto; top: auto; bottom: 20px; }
-            .menu-btn { top: 15px; left: 15px; }
-        }
+        /* LOADING POPUP */
+        .error-popup-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.9); z-index: 99999; justify-content: center; align-items: center; }
+        .error-popup-box { background: white; padding: 25px 20px; border-radius: 24px; width: 90%; max-width: 360px; text-align: center; }
+        .error-popup-title { font-family: 'Tiro Bangla', serif; color: var(--primary); font-size: 22px; font-weight: 700; }
+        
+        /* DARK MODE OVERRIDES */
+        body.dark-mode { background: var(--dark-bg); }
+        body.dark-mode .dashboard, body.dark-mode .sidebar, body.dark-mode .menu-btn, body.dark-mode .error-popup-box { background: var(--dark-surface); color: #f8fafc; }
+        body.dark-mode h2, body.dark-mode .bus-name { color: #f8fafc; }
+        body.dark-mode .bus-list-item { background: #334155; color: #cbd5e1; }
+        body.dark-mode .leaflet-tile-pane { filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%); }
+
+        /* SVG ICONS */
+        .bus-img-top { width: 34px; height: 60px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); }
     </style>
 </head>
-
 <body>
+    <div id="floating-night-notice" class="floating-notice" style="display:none;">🌙 Service Paused (Night)</div>
+    
+    <button class="menu-btn" onclick="toggleSidebar()">☰</button>
 
-<button class="menu-btn" onclick="toggleSidebar()">☰</button>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>🚍 Fleet Status</h2>
+            <div class="header-actions">
+                <div class="switches-container">
+                    <span class="switch-label">DARK MODE</span>
+                    <label class="theme-switch">
+                        <input type="checkbox" id="dark-mode-toggle" onchange="toggleDarkMode()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <button class="close-btn" style="background:none; border:none; font-size:24px; cursor:pointer;" onclick="toggleSidebar()">×</button>
+            </div>
+        </div>
 
-<div class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-        <h2 style="margin:0">🚍 Fleet Overview</h2>
-        <button onclick="toggleSidebar()" style="background:none; border:none; font-size:24px; cursor:pointer">×</button>
+        <input type="text" id="search-box" placeholder="Search bus..." onkeyup="filterSidebar()" style="width:100%; padding:10px; border-radius:10px; border:1px solid #ddd; margin-bottom:15px;">
+
+        <div id="bus-list-container">
+            <div style="text-align:center; padding: 20px; color: #94a3b8;">📡 Initializing ALIF Network...</div>
+        </div>
+
+        <div class="bus-list-item about-toggle-btn" onclick="toggleAbout()">ℹ️ About Branding</div>
+        <div id="about-box" class="about-content" style="display:none; padding:15px; background:#f1f5f9; border-radius:10px; margin-top:10px; font-size:13px;">
+            <div style="font-weight:800; color:var(--primary); font-size:16px;">ALIF Unified Tracker V3.0</div>
+            <p>Designed for high-performance transit monitoring and professional fleet management.</p>
+            <div style="border-top:1px solid #ddd; padding-top:10px; margin-top:10px;">
+                <b>Developed By:</b> Alif<br>
+                <b>Powered by:</b> Google Gemini AI
+            </div>
+        </div>
     </div>
 
-    <input type="text" id="search-box" class="search-input" placeholder="Search fleet..." onkeyup="filterSidebar()">
-
-    <div id="bus-list-container">
-        <div style="text-align:center; padding:20px; color:#64748b">Initializing system...</div>
+    <div id="error-popup" class="error-popup-overlay">
+        <div class="error-popup-box">
+            <div class="error-popup-title">সার্ভার সচল হচ্ছে...</div>
+            <div id="bengali-timer" style="font-size:40px; font-weight:900; color:var(--primary); margin:15px 0;">50</div>
+            <div style="font-family:'Tiro Bangla'; color:#64748b;">প্রথমবার লোড হতে ১ মিনিট সময় লাগতে পারে। ধৈর্য ধরুন।</div>
+            <div style="margin-top:15px; cursor:pointer; font-size:12px; text-decoration:underline;" onclick="closeErrorPopup()">Dismiss</div>
+        </div>
     </div>
 
-    <div class="sidebar-footer">
-        <div class="brand-text">Engineered by <span>ALIF XN</span></div>
+    <div id="map"></div>
+
+    <div class="dashboard">
+        <div class="header-row"><div class="live-badge"></div><h2>ALIF Shuttle Live</h2></div>
+        <div id="status-text">Connecting...</div>
+        <button onclick="findUser()" class="loc-btn"><span>📍</span> Locate Me</button>
     </div>
-</div>
 
-<div id="map"></div>
+    <script>
+        const map = L.map('map', {zoomControl: false, attributionControl: false}).setView([23.8741, 90.3992], 12);
+        L.control.zoom({position: 'bottomright'}).addTo(map);
+        L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20, subdomains: ['mt0','mt1','mt2','mt3'] }).addTo(map);
 
-<div class="dashboard">
-    <h2>BUFT Real-Time Transit Tracker</h2>
-    <div id="status-text" class="status-badge maintenance">
-        <span class="status-dot"></span> Connecting...
-    </div>
-    <button onclick="findUser()" class="loc-btn">📍 Live Position</button>
-</div>
+        const SERVER = "https://bus-server-lr2x.onrender.com"; 
+        let watchId = null;
+        let userMarker = null;
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+        function toggleAbout() { const box = document.getElementById('about-box'); box.style.display = (box.style.display === "block") ? "none" : "block"; }
 
-<script>
-// 1. Initialize Map
-const map = L.map('map', { zoomControl: false }).setView([23.8864, 90.3936], 15);
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode') ? '1' : '0');
+        }
 
-// 2. Load Tiles (OpenStreetMap)
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© ALIF XN'
-}).addTo(map);
+        if(localStorage.getItem('darkMode') === '1') {
+            document.body.classList.add('dark-mode');
+            document.getElementById('dark-mode-toggle').checked = true;
+        }
 
-// 3. Mock Data for BUFT Buses
-const fleet = [
-    { id: 1, name: "BUFT Route 1 (Ashulia)", status: "En Route", lat: 23.8864, lng: 90.3936 },
-    { id: 2, name: "BUFT Route 2 (Uttara)", status: "Boarding", lat: 23.8759, lng: 90.3795 },
-    { id: 3, name: "BUFT Route 3 (Mirpur)", status: "Delayed", lat: 23.8041, lng: 90.3673 }
-];
+        function findUser() {
+            if (!navigator.geolocation) { alert("GPS not supported."); return; }
+            const btn = document.querySelector('.loc-btn');
+            
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+                if(userMarker) { map.removeLayer(userMarker); userMarker = null; }
+                btn.innerHTML = "<span>📍</span> Locate Me";
+                return;
+            }
 
-// 4. Render Fleet
-function initFleet() {
-    const container = document.getElementById('bus-list-container');
-    container.innerHTML = '';
+            btn.innerHTML = "<span>🛰️</span> Tracking...";
+            watchId = navigator.geolocation.watchPosition((pos) => {
+                const latlng = [pos.coords.latitude, pos.coords.longitude];
+                if (!userMarker) {
+                    userMarker = L.marker(latlng).addTo(map).bindPopup("You are here");
+                    map.flyTo(latlng, 16);
+                } else {
+                    userMarker.setLatLng(latlng);
+                }
+            }, (err) => {
+                alert("Please enable location services.");
+                btn.innerHTML = "<span>📍</span> Locate Me";
+            }, { enableHighAccuracy: true });
+        }
 
-    fleet.forEach(bus => {
-        // Map Marker
-        const marker = L.marker([bus.lat, bus.lng]).addTo(map);
-        marker.bindPopup(`<b>${bus.name}</b><br>Status: ${bus.status}`);
-
-        // Sidebar Item
-        const item = document.createElement('div');
-        item.className = 'bus-list-item';
-        item.onclick = () => {
-            map.flyTo([bus.lat, bus.lng], 16);
-            if(window.innerWidth < 600) toggleSidebar();
-        };
-        
-        let color = bus.status === "En Route" ? "#22c55e" : (bus.status === "Delayed" ? "#ef4444" : "#eab308");
-        
-        item.innerHTML = `
-            <span style="font-weight:700">${bus.name}</span>
-            <span style="font-size:12px; color:${color}; font-weight:bold">${bus.status}</span>
-        `;
-        container.appendChild(item);
-    });
-
-    // Update Dashboard UI
-    const statusBox = document.getElementById('status-text');
-    statusBox.className = 'status-badge active';
-    statusBox.innerHTML = '<span class="status-dot"></span> Monitoring Active Fleet';
-}
-
-// 5. Functions
-function toggleSidebar() {
-    document.getElementById("sidebar").classList.toggle("open");
-}
-
-function filterSidebar() {
-    let q = document.getElementById("search-box").value.toLowerCase();
-    let items = document.querySelectorAll(".bus-list-item");
-    items.forEach(i => {
-        i.style.display = i.innerText.toLowerCase().includes(q) ? "flex" : "none";
-    });
-}
-
-function findUser() {
-    map.locate({setView: true, maxZoom: 16});
-}
-
-map.on('locationfound', (e) => {
-    L.circle(e.latlng, e.accuracy).addTo(map);
-    L.marker(e.latlng).addTo(map).bindPopup("You are here").openPopup();
-});
-
-// Run
-setTimeout(initFleet, 1000);
-</script>
-
+        function closeErrorPopup() { document.getElementById('error-popup').style.display = 'none'; }
+    </script>
 </body>
 </html>
