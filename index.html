@@ -1,313 +1,60 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R1EWC93EWM"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-R1EWC93EWM');
-    </script>
-
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BUFT Real-Time Transit Tracker | ALIF XN</title>
-
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#ffffff">
-    <link rel="apple-touch-icon" href="logo.png">
-
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
-
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;900&family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
-
-    <style>
-        /* Modern CSS Variables for easy theming */
-        :root {
-            --primary-blue: #2563eb;
-            --primary-hover: #1d4ed8;
-            --bg-light: #f0f2f5;
-            --surface-white: rgba(255, 255, 255, 0.9);
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-            --glass-border: rgba(255, 255, 255, 0.2);
-            --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.1);
-        }
-
-        * { box-sizing: border-box; }
-        
-        body { 
-            margin: 0; 
-            padding: 0; 
-            font-family: 'Outfit', sans-serif; 
-            background: var(--bg-light); 
-            overflow: hidden; 
-            color: var(--text-main);
-        }
-
-        #map { height: 100vh; width: 100%; z-index: 1; }
-
-        /* Glassmorphism Dashboard */
-        .dashboard {
-            position: absolute; 
-            top: 20px; 
-            right: 20px;
-            background: var(--surface-white); 
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            padding: 16px 20px;
-            border-radius: 20px; 
-            border: 1px solid var(--glass-border);
-            box-shadow: var(--shadow-soft);
-            z-index: 1000; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center;
-            width: max-content;
-            max-width: 90vw;
-        }
-
-        .dashboard h2 { 
-            margin: 0 0 8px 0; 
-            font-size: 16px; 
-            font-weight: 800; 
-            letter-spacing: -0.3px;
-        }
-
-        /* Upgraded Status Badge */
-        .status-badge {
-            font-size: 12px;
-            font-weight: 700;
-            background: #e2e8f0;
-            color: var(--text-muted);
-            padding: 6px 14px;
-            border-radius: 20px;
-            text-align: center;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 12px;
-            transition: all 0.3s ease;
-        }
-
-        /* Blinking dot for live status */
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background-color: #eab308; /* Yellow for maintenance/connecting */
-            border-radius: 50%;
-            display: inline-block;
-        }
-        
-        .status-badge.active .status-dot { background-color: #22c55e; } /* Green for active */
-        .status-badge.maintenance .status-dot { background-color: #ef4444; } /* Red for paused/maintenance */
-
-        /* Modern Buttons */
-        .menu-btn {
-            position: absolute; 
-            top: 20px; 
-            left: 20px;
-            background: var(--surface-white); 
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border); 
-            padding: 12px 16px;
-            border-radius: 16px; 
-            box-shadow: var(--shadow-soft);
-            font-size: 20px; 
-            cursor: pointer;
-            z-index: 1000;
-            transition: transform 0.2s ease;
-        }
-
-        .menu-btn:active { transform: scale(0.95); }
-
-        .loc-btn {
-            width: 100%;
-            padding: 10px 16px;
-            background: var(--primary-blue);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 14px;
-            cursor: pointer;
-            transition: background 0.2s;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .loc-btn:hover { background: var(--primary-hover); }
-
-        /* Sleek Sidebar */
-        .sidebar {
-            position: fixed; 
-            top: 0; 
-            left: -350px;
-            width: 340px; 
-            height: 100%;
-            background: #ffffff; 
-            box-shadow: 10px 0 30px rgba(0,0,0,0.05);
-            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            padding: 24px; 
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .sidebar.open { left: 0; }
-
-        .sidebar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #e2e8f0;
-            padding-bottom: 15px;
-        }
-
-        .sidebar-header h2 {
-            margin: 0;
-            font-size: 20px;
-            font-weight: 800;
-        }
-
-        .close-btn {
-            background: none;
-            border: none;
-            font-size: 24px;
-            color: var(--text-muted);
-            cursor: pointer;
-        }
-
-        /* Upgraded Search Input */
-        .search-input {
-            width: 100%;
-            padding: 12px 16px;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            font-family: 'Outfit', sans-serif;
-            font-size: 14px;
-            margin-bottom: 20px;
-            transition: border-color 0.2s;
-            outline: none;
-        }
-
-        .search-input:focus { border-color: var(--primary-blue); }
-
-        #bus-list-container {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding-right: 5px; /* Scrollbar spacing */
-        }
-
-        .system-message {
-            text-align: center;
-            padding: 30px 20px;
-            color: var(--text-muted);
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .bus-list-item {
-            padding: 14px 16px;
-            margin-bottom: 10px;
-            background: #f8fafc;
-            border: 1px solid #f1f5f9;
-            border-radius: 12px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.2s;
-        }
-
-        .bus-list-item:hover { background: #f1f5f9; transform: translateY(-1px); }
-        .bus-name { font-weight: 700; font-size: 15px; color: var(--text-main); }
-        
-        /* ALIF XN Branding */
-        .sidebar-footer {
-            margin-top: auto;
-            padding-top: 20px;
-            text-align: center;
-            border-top: 1px solid #e2e8f0;
-        }
-
-        .brand-text {
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--text-muted);
-            letter-spacing: 0.5px;
-        }
-        .brand-text span {
-            font-weight: 900;
-            color: var(--text-main);
-        }
-
-        /* Dark Mode Compatibility */
-        @media (prefers-color-scheme: dark) {
-            body { background: #0f172a; color: #f8fafc; }
-            .sidebar { background: #1e293b; border-right: 1px solid #334155; box-shadow: none; }
-            .sidebar-header, .sidebar-footer { border-color: #334155; }
-            .dashboard, .menu-btn { 
-                background: rgba(30, 41, 59, 0.85); 
-                border-color: rgba(255,255,255,0.1); 
-            }
-            .dashboard h2, .sidebar-header h2 { color: #f8fafc; }
-            .search-input { background: #0f172a; border-color: #334155; color: #f8fafc; }
-            .bus-list-item { background: #0f172a; border-color: #334155; }
-            .bus-list-item:hover { background: #1e293b; }
-            .bus-name, .brand-text span { color: #f8fafc; }
-            .status-badge { background: #334155; color: #cbd5e1; }
-        }
-    </style>
-</head>
-
-<body>
-
-<button class="menu-btn" onclick="toggleSidebar()">☰</button>
-
-<div class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-        <h2>🚍 Fleet Overview</h2>
-        <button class="close-btn" onclick="toggleSidebar()">×</button>
-    </div>
-
-    <input type="text" id="search-box" class="search-input" placeholder="Search fleet or routes..." onkeyup="filterSidebar()">
-
-    <div id="bus-list-container">
-        <div class="system-message">
-            <span class="status-dot" style="background-color: #eab308; margin-right: 5px;"></span> 
-            Connecting to secure ALIF XN systems...
-        </div>
-        
-        </div>
-
-    <div class="sidebar-footer">
-        <div class="brand-text">Engineered by <span>ALIF XN</span></div>
-    </div>
-</div>
-
-<div id="map"></div>
-
-<div class="dashboard">
-    <h2>BUFT Real-Time Transit Tracker</h2>
-    
-    <div id="status-text" class="status-badge maintenance">
-        <span class="status-dot"></span> System Maintenance Mode
-    </div>
-    
-    <button onclick="findUser()" class="loc-btn">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
-        Live Position
-    </button>
-</div>
-
 <script>
+// 1. Initialize the Map
+// Coordinates set to center around the campus area
+const map = L.map('map', { zoomControl: false }).setView([23.8864, 90.3936], 14);
+
+// 2. Add Map Tiles (Using OpenStreetMap - completely free and doesn't require API keys)
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap contributors | ALIF XN'
+}).addTo(map);
+
+// Move zoom controls to the bottom right so they don't block the UI
+L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+// 3. Mock Fleet Data (Simulating a live backend connection)
+const fleetData = [
+    { id: 1, name: "Route 1 - Express", status: "En Route", lat: 23.8864, lng: 90.3936 },
+    { id: 2, name: "Route 2 - Local", status: "Boarding", lat: 23.8800, lng: 90.3950 },
+    { id: 3, name: "Route 3 - Shuttle", status: "Delayed", lat: 23.8900, lng: 90.3900 }
+];
+
+// 4. Render Data to Map and Sidebar
+function loadFleetData() {
+    const container = document.getElementById('bus-list-container');
+    container.innerHTML = ''; // Clears the "Connecting..." message
+
+    fleetData.forEach(bus => {
+        // Set dynamic colors based on status
+        let statusColor = '#eab308'; // Yellow default
+        if (bus.status === 'En Route') statusColor = '#22c55e'; // Green
+        if (bus.status === 'Delayed') statusColor = '#ef4444'; // Red
+
+        // Build Sidebar Item
+        const busHTML = `
+            <div class="bus-list-item" onclick="focusBus(${bus.lat}, ${bus.lng})">
+                <span class="bus-name">${bus.name}</span>
+                <span style="font-size: 12px; color: ${statusColor}; font-weight: bold;">${bus.status}</span>
+            </div>
+        `;
+        container.innerHTML += busHTML;
+
+        // Add Marker to Map
+        L.marker([bus.lat, bus.lng]).addTo(map)
+            .bindPopup(`<b>${bus.name}</b><br>Status: ${bus.status}`);
+    });
+
+    // Update the Dashboard Status Badge
+    const statusBadge = document.getElementById('status-text');
+    statusBadge.className = 'status-badge active';
+    statusBadge.innerHTML = '<span class="status-dot"></span> System Online';
+}
+
+// Simulate network loading time (1.5 seconds) then load the mock data
+setTimeout(loadFleetData, 1500);
+
+// --- UI Functions ---
+
 function toggleSidebar(){
     document.getElementById("sidebar").classList.toggle("open");
 }
@@ -315,25 +62,38 @@ function toggleSidebar(){
 function filterSidebar(){
     let q = document.getElementById("search-box").value.toLowerCase();
     let rows = document.querySelectorAll(".bus-list-item");
-    rows.forEach(r=>{
-        r.style.display = r.innerText.toLowerCase().includes(q) ? "flex" : "none";
+    rows.forEach(r => {
+        let text = r.querySelector('.bus-name').innerText.toLowerCase();
+        r.style.display = text.includes(q) ? "flex" : "none";
     });
 }
 
-function findUser(){
-    // You can tie this to Leaflet's map.locate() method later
-    alert("Live Position Tracking Activated. Initializing secure geolocation...");
+// Click a bus in the sidebar to fly to it on the map
+function focusBus(lat, lng) {
+    map.flyTo([lat, lng], 16, { duration: 1.5 });
+    // Auto-close sidebar on mobile after clicking
+    if(window.innerWidth < 768) toggleSidebar(); 
 }
 
-// Example function for when the system comes online (you can call this when your data loads)
-function setSystemOnline() {
-    const statusBadge = document.getElementById('status-text');
-    statusBadge.className = 'status-badge active';
-    statusBadge.innerHTML = '<span class="status-dot"></span> Monitoring Active Fleet';
+// Live GPS Tracking
+function findUser(){
+    const locBtn = document.querySelector('.loc-btn');
+    locBtn.innerHTML = "Fetching GPS...";
     
-    document.getElementById('bus-list-container').innerHTML = '<div class="system-message">Fleet data synced. Awaiting route broadcast.</div>';
+    // Request device location
+    map.locate({setView: true, maxZoom: 16});
+    
+    // If successful
+    map.on('locationfound', function(e) {
+        L.marker(e.latlng).addTo(map).bindPopup("Your Live Position").openPopup();
+        locBtn.innerHTML = "📍 Location Found";
+        setTimeout(() => locBtn.innerHTML = "📍 Live Position", 3000); // Reset text
+    });
+    
+    // If user denies permission or it fails
+    map.on('locationerror', function(e) {
+        alert("Could not access location. Please check your browser's GPS permissions.");
+        locBtn.innerHTML = "📍 Live Position";
+    });
 }
 </script>
-
-</body>
-</html>
